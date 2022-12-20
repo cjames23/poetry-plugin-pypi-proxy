@@ -14,9 +14,9 @@ POETRY_VERSION = tuple(
 
 
 if POETRY_VERSION <= (1, 2, 1):
-    from poetry.core.semver.version import Version
+    from poetry.core.semver.version import Version  # type: ignore
 else:
-    from poetry.core.constraints.version import Version
+    from poetry.core.constraints.version import Version  # type: ignore
 
 
 # stop pycln from removing the above import

@@ -21,7 +21,7 @@ from werkzeug.wrappers import Request, Response
 from poetry_plugin_pypi_proxy.plugin import PypiProxyPlugin
 
 if TYPE_CHECKING:
-    from typing import Generator
+    from typing import Generator, Mapping
 
     from cleo.io.io import IO
     from poetry.poetry import Poetry
@@ -39,7 +39,7 @@ class MockApplication(Application):
         return _poetry
 
     def _load_plugins(self, io: IO | None = None) -> None:
-        if self._plugins_loaded:
+        if self._plugins_loaded:  # type: ignore
             return
 
         manager = PluginManager(ApplicationPlugin.group)
@@ -69,18 +69,18 @@ class AuthHTTPServer(HTTPServer):
         )
 
     def expect_request(
-        self, *args, headers: dict[str, str] | None = None, **kwargs
+        self, *args, headers: Mapping[str, str] | None = None, **kwargs
     ) -> RequestHandler:
         if self.auth:
-            headers = headers or {}
+            headers = dict(headers or {})
             headers["Authorization"] = self.auth_header
-        return super().expect_request(*args, headers=headers, **kwargs)
+        return super().expect_request(*args, headers=headers, **kwargs)  # type: ignore
 
 
 @pytest.fixture(
     params=[{"auth": None}, {"auth": HTTPAuthCredential("username", "password")}]
 )
-def httpserver(request) -> AuthHTTPServer:
+def httpserver(request) -> Generator[AuthHTTPServer, None, None]:
     server = AuthHTTPServer(**request.param)
     server.start()
     yield server
@@ -90,9 +90,9 @@ def httpserver(request) -> AuthHTTPServer:
 
 
 @pytest.fixture(scope="session")
-def sample_dependency() -> Path:
-    with tempfile.TemporaryDirectory() as tmp_path:
-        tmp_path = Path(tmp_path) / "sample-dependency"
+def sample_dependency() -> Generator[Path, None, None]:
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir) / "sample-dependency"
         shutil.copytree(Path(__file__).parent / "sample-dependency", tmp_path)
         for version in ["0.0.1", "0.0.2"]:
             subprocess.run(
@@ -157,10 +157,10 @@ def sample_dependency_v002(httpserver: HTTPServer, sample_dependency: Path) -> N
 
 @pytest.fixture
 def poetry(
-    httpserver: HTTPServer,
+    httpserver: AuthHTTPServer,
     mocker: MockerFixture,
     tmp_path: Path,
-) -> Generator[None, ApplicationTester, None]:
+) -> Generator[ApplicationTester, None, None]:
     project_path = tmp_path / "sample-project"
     shutil.copytree(Path(__file__).parent / "sample-project", project_path)
     auth = httpserver.auth
@@ -181,12 +181,10 @@ def poetry(
     mocker.patch("pathlib.Path.cwd", return_value=project_path)
     poetry = ApplicationTester(MockApplication())
     yield poetry
-    print(poetry.io.output.fetch(), file=sys.stdout)
-    print(poetry.io.error_output.fetch(), file=sys.stderr)
 
 
 def test_install(
-    httpserver: HTTPServer,
+    httpserver: AuthHTTPServer,
     poetry: ApplicationTester,
     sample_dependency_listing: None,
     sample_dependency_v001: None,
@@ -197,7 +195,7 @@ def test_install(
 
 
 def test_update(
-    httpserver: HTTPServer,
+    httpserver: AuthHTTPServer,
     poetry: ApplicationTester,
     sample_dependency_listing: None,
     sample_dependency_v001: None,
@@ -209,7 +207,7 @@ def test_update(
 
 
 def test_lock(
-    httpserver: HTTPServer,
+    httpserver: AuthHTTPServer,
     poetry: ApplicationTester,
     sample_dependency_listing: None,
     sample_dependency_v001: None,
@@ -221,7 +219,7 @@ def test_lock(
 
 
 def test_publish(
-    httpserver: HTTPServer,
+    httpserver: AuthHTTPServer,
     poetry: ApplicationTester,
 ) -> None:
     httpserver.expect_request(

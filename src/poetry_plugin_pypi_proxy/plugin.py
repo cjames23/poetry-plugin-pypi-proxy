@@ -85,6 +85,9 @@ class PypiProxyPlugin(Plugin):
         # Create entries in the config for the repo and Auth if we have it
         poetry.config._config["repositories"] = {proxy_id: {"url": auth_config.url}}
         if auth_config.http_auth is not None:
+            poetry.config._config["http-basic"] = poetry.config._config.get(
+                "http-basic", {}
+            )
             poetry.config._config["http-basic"][proxy_id] = {
                 "username": auth_config.http_auth.username,
                 "password": auth_config.http_auth.password,

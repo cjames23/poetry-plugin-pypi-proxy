@@ -29,6 +29,7 @@ pytest-httpserver = "^1.0.6"
 
 [tool.poetry.group.typing.dependencies]
 mypy = "^0.982"
+types-setuptools = "^65.6.0.2"
 
 
 [tool.isort]
