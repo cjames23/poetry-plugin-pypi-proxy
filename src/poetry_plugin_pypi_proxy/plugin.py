@@ -28,7 +28,7 @@ class LegacyProxyRepository(LegacyRepository):
     """
 
     def package(
-        self, name: str, version: Version, extras: list[str] | None = None
+        self, name: str, version: Version
     ) -> Package:
         """
         Pull package information without proxy-specific info.
@@ -38,7 +38,7 @@ class LegacyProxyRepository(LegacyRepository):
         :param extras: List of requires extras to install
         :returns: Package metadata
         """
-        package = copy.copy(super().package(name, version, extras))
+        package = copy.copy(super().package(name, version))
 
         # Eliminate any metadata that would cause the proxy url to
         # appear in the lockfile
