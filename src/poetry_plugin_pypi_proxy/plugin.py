@@ -27,9 +27,7 @@ class LegacyProxyRepository(LegacyRepository):
     directly from Pypi.
     """
 
-    def package(
-        self, name: str, version: Version
-    ) -> Package:
+    def package(self, name: str, version: Version) -> Package:
         """
         Pull package information without proxy-specific info.
 
